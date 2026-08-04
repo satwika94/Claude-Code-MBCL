@@ -1,0 +1,642 @@
+/* ==========================================================
+   Buku Gizi — stylesheet utama
+   Konsep: buku catatan/nota warung. Kertas beras hangat,
+   angka dalam monospace ala struk, satu elemen sorotan:
+   cincin piring kalori.
+   ========================================================== */
+
+.page {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 28px 20px 64px;
+}
+
+.page--centered {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+}
+
+/* ---------- tipografi ---------- */
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin: 0 0 8px;
+}
+
+.display-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(28px, 4vw, 38px);
+  line-height: 1.08;
+  margin: 0 0 12px;
+  color: var(--ink);
+}
+
+.display-title--sm {
+  font-size: clamp(22px, 3vw, 28px);
+  margin-bottom: 0;
+}
+
+.lede {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  max-width: 46ch;
+  margin: 0 0 28px;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 20px;
+  margin: 0 0 16px;
+  color: var(--ink);
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+.muted {
+  color: var(--ink-soft);
+}
+
+/* ---------- kartu dasar (motif kertas nota) ---------- */
+
+.ledger-card {
+  background: var(--santan);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  padding: 28px;
+  box-shadow: var(--shadow-card);
+}
+
+/* ---------- onboarding ---------- */
+
+.onboarding-card {
+  width: 100%;
+  max-width: 560px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 14px;
+  margin-top: 8px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.field span {
+  font-weight: 500;
+}
+
+.field--wide {
+  grid-column: 1 / -1;
+}
+
+.field--portion {
+  max-width: 160px;
+}
+
+input,
+select {
+  border: 1px solid var(--line-strong);
+  background: #fff;
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 15px;
+  color: var(--ink);
+}
+
+input:focus,
+select:focus {
+  border-color: var(--daun);
+}
+
+.form-error {
+  grid-column: 1 / -1;
+  color: var(--sambal);
+  font-size: 13px;
+  margin: 0;
+}
+
+/* ---------- tombol ---------- */
+
+.btn {
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.15s ease;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn--primary {
+  background: var(--ink);
+  color: var(--santan);
+}
+
+.btn--primary:hover {
+  background: #33392c;
+}
+
+.btn--primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn--ghost {
+  background: transparent;
+  border: 1px solid var(--line-strong);
+  color: var(--ink);
+}
+
+.btn--ghost:hover {
+  background: var(--line);
+}
+
+.btn-icon {
+  border: none;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.btn-icon:hover {
+  background: var(--line);
+  color: var(--sambal);
+}
+
+/* ---------- header dashboard ---------- */
+
+.app-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 22px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* ---------- hero: cincin piring + status ---------- */
+
+.hero-card {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+
+.hero-side {
+  flex: 1;
+  min-width: 220px;
+}
+
+.plate-ring {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.plate-ring__center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.plate-ring__value {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 40px;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.plate-ring__unit {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+  margin-top: 6px;
+}
+
+.status-pill {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(69, 104, 74, 0.12);
+  color: var(--daun);
+  margin: 0 0 18px;
+}
+
+.status-pill--over {
+  background: rgba(178, 59, 46, 0.12);
+  color: var(--sambal);
+}
+
+/* ---------- makro bars ---------- */
+
+.macro-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.macro-row__label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 5px;
+}
+
+.macro-track {
+  height: 8px;
+  background: var(--line);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.macro-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ---------- dua kolom: logger + struk ---------- */
+
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 720px) {
+  .two-col {
+    grid-template-columns: 1fr;
+  }
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .hero-card {
+    flex-direction: column;
+    text-align: center;
+  }
+  .hero-side {
+    width: 100%;
+  }
+}
+
+/* ---------- pencarian & logger ---------- */
+
+.logger-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.search-wrap {
+  position: relative;
+}
+
+.search-input {
+  width: 100%;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: 15px;
+  background: #fff;
+}
+
+.search-status {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--ink-soft);
+}
+
+.search-results {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: #fff;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.search-results li + li {
+  border-top: 1px dashed var(--line);
+}
+
+.search-results button {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  background: none;
+  border: none;
+  padding: 10px 14px;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.search-results button:hover {
+  background: var(--rice);
+}
+
+.portion-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.portion-preview {
+  font-size: 13px;
+  color: var(--ink-soft);
+  padding-bottom: 2px;
+}
+
+/* ---------- struk catatan hari ini ---------- */
+
+.receipt-card {
+  padding-top: 24px;
+}
+
+.receipt-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.receipt-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px dashed var(--line-strong);
+}
+
+.receipt-row:last-child {
+  border-bottom: none;
+}
+
+.receipt-row__main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.receipt-row__name {
+  font-size: 14.5px;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.receipt-row__portion {
+  font-size: 12px;
+}
+
+.receipt-row__end {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.empty-note {
+  color: var(--ink-soft);
+  font-size: 14px;
+  margin: 0;
+}
+
+/* ---------- tombol kecil & chip ---------- */
+
+.btn--sm {
+  padding: 7px 14px;
+  font-size: 12.5px;
+}
+
+.btn-chip {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  border: 1px solid var(--line-strong);
+  background: #fff;
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 4px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-chip:hover:not(:disabled) {
+  border-color: var(--daun);
+  background: rgba(69, 104, 74, 0.08);
+}
+
+.btn-chip:disabled {
+  cursor: default;
+}
+
+.btn-chip--done {
+  color: var(--daun);
+  border-color: var(--daun);
+  background: rgba(69, 104, 74, 0.1);
+}
+
+/* ---------- riwayat 7 hari ---------- */
+
+.history-card {
+  margin-bottom: 20px;
+}
+
+.history-chart {
+  position: relative;
+  margin-top: 18px;
+  padding-top: 18px;
+}
+
+.history-chart__target-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px dashed var(--line-strong);
+  height: 0;
+}
+
+.history-chart__target-line span {
+  position: absolute;
+  right: 0;
+  top: -16px;
+  font-size: 10px;
+  color: var(--ink-soft);
+  background: var(--santan);
+  padding-left: 6px;
+}
+
+.history-chart__bars {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  height: 160px;
+}
+
+.history-bar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+}
+
+.history-bar__track {
+  flex: 1;
+  width: 100%;
+  max-width: 34px;
+  display: flex;
+  align-items: flex-end;
+  margin: 0 auto;
+}
+
+.history-bar__fill {
+  width: 100%;
+  background: var(--turmeric-tint);
+  border-radius: 6px 6px 3px 3px;
+  transition: height 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  min-height: 0;
+}
+
+.history-bar__fill--over {
+  background: var(--sambal);
+}
+
+.history-bar__fill--today {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.history-bar__label {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
+.history-bar__label--today {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* ---------- menu hari ini ---------- */
+
+.menu-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.menu-groups {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px 28px;
+  margin-top: 12px;
+}
+
+.menu-group__label {
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+  margin: 0 0 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+}
+
+.menu-item-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.menu-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--line);
+  font-size: 13.5px;
+}
+
+.menu-item:last-child {
+  border-bottom: none;
+}
+
+.menu-item__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menu-item__end {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.menu-item--empty {
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
+@media (max-width: 720px) {
+  .menu-groups {
+    grid-template-columns: 1fr;
+  }
+}
