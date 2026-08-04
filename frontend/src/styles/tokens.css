@@ -1,0 +1,76 @@
+:root {
+  /* --- Palet: terinspirasi buku catatan warung + bahan dapur Indonesia --- */
+  --rice: #efe3c8;       /* latar utama — beras/kertas nota */
+  --santan: #fbf6e9;     /* permukaan kartu — putih santan */
+  --ink: #22271f;        /* teks utama — nyaris hitam, undertone kayu bakar */
+  --ink-soft: #55503f;   /* teks sekunder */
+  --turmeric: #c68a1f;   /* aksen utama — kunyit, untuk kalori */
+  --turmeric-tint: #d9a441;
+  --daun: #45684a;       /* protein / status positif */
+  --kayu: #8b5e34;       /* lemak — cokelat kayu manis */
+  --sambal: #b23b2e;     /* peringatan / hapus / lewat target */
+  --line: #d9c9a3;       /* garis pembatas tipis */
+  --line-strong: #c2ac78;
+
+  --radius-plate: 999px;
+  --radius-card: 18px;
+  --radius-sm: 10px;
+
+  --font-display: "Fraunces", "Iowan Old Style", serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --shadow-card: 0 1px 0 var(--line), 0 8px 24px -16px rgba(34, 39, 31, 0.35);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--rice);
+  background-image: radial-gradient(circle at 1px 1px, rgba(34, 39, 31, 0.05) 1px, transparent 0);
+  background-size: 22px 22px;
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+button {
+  font-family: inherit;
+}
+
+input,
+select {
+  font-family: inherit;
+}
+
+::selection {
+  background: var(--turmeric);
+  color: var(--santan);
+}
+
+:focus-visible {
+  outline: 2px solid var(--daun);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
