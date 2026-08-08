@@ -31,21 +31,41 @@ const emptyForm = {
   activityLevel: "moderate",
   goal: "maintenance",
   dietaryPreference: "none",
+  carbPct: "50",
+  proteinPct: "30",
+  fatPct: "20",
 };
 
 export default function Onboarding({ onDone }) {
   const [form, setForm] = useState(emptyForm);
+  const [useCustomMacro, setUseCustomMacro] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const update = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
+  const macroPctTotal =
+    (Number(form.carbPct) || 0) + (Number(form.proteinPct) || 0) + (Number(form.fatPct) || 0);
+  const macroPctValid = Math.abs(macroPctTotal - 100) < 0.5;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    if (useCustomMacro && !macroPctValid) {
+      setError(`Total persentase makro harus 100% (sekarang ${macroPctTotal}%)`);
+      return;
+    }
+
     setLoading(true);
     try {
-      const data = await api.createUser(form);
+      const payload = { ...form };
+      if (!useCustomMacro) {
+        delete payload.carbPct;
+        delete payload.proteinPct;
+        delete payload.fatPct;
+      }
+      const data = await api.createUser(payload);
       onDone(data.user);
     } catch (err) {
       setError(err.message);
@@ -155,9 +175,60 @@ export default function Onboarding({ onDone }) {
             </select>
           </label>
 
+          <label className="field field--wide field--checkbox">
+            <input
+              type="checkbox"
+              checked={useCustomMacro}
+              onChange={(e) => setUseCustomMacro(e.target.checked)}
+            />
+            <span>Atur target makro sendiri (opsional)</span>
+          </label>
+
+          {useCustomMacro && (
+            <div className="field--wide macro-pct-grid">
+              <label className="field">
+                <span>Karbohidrat (%)</span>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={form.carbPct}
+                  onChange={update("carbPct")}
+                />
+              </label>
+              <label className="field">
+                <span>Protein (%)</span>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={form.proteinPct}
+                  onChange={update("proteinPct")}
+                />
+              </label>
+              <label className="field">
+                <span>Lemak (%)</span>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={form.fatPct}
+                  onChange={update("fatPct")}
+                />
+              </label>
+              <p className={`macro-pct-total${macroPctValid ? "" : " macro-pct-total--warn"}`}>
+                Total: {macroPctTotal}% {!macroPctValid && "— harus pas 100%"}
+              </p>
+            </div>
+          )}
+
           {error && <p className="form-error">{error}</p>}
 
-          <button type="submit" className="btn btn--primary field--wide" disabled={loading}>
+          <button
+            type="submit"
+            className="btn btn--primary field--wide"
+            disabled={loading || (useCustomMacro && !macroPctValid)}
+          >
             {loading ? "Menghitung…" : "Hitung kebutuhan gizi"}
           </button>
         </form>

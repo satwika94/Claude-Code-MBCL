@@ -5,7 +5,10 @@ Dibangun dengan Node.js + Express + PostgreSQL (mis. Supabase/Neon, diakses lewa
 
 ## Fitur yang sudah jalan
 - Kalkulasi BMR (Mifflin-St Jeor) → TDEE → target kalori sesuai tujuan (cutting/maintenance/bulking)
-- Kalkulasi target makro (protein/lemak/karbo)
+- Kalkulasi target makro (protein/lemak/karbo) — otomatis (1.8g/kg protein, 25% lemak, sisanya
+  karbo) atau **custom**: user bisa isi persentase karbo/protein/lemak sendiri (opsional, wajib
+  total 100%) saat isi profil
+- Estimasi target kebutuhan cairan harian (35 ml/kg berat badan), ditampilkan di dashboard
 - Database bahan makanan: **1.343 item resmi dari TKPI** (Tabel Komposisi Pangan Indonesia,
   Kementerian Kesehatan RI), lintas 10 kategori (karbohidrat, protein hewani, protein nabati,
   sayur, buah, lemak, **camilan/jajan pasar**, minuman, bumbu, olahan)
@@ -174,11 +177,15 @@ Content-Type: application/json
   "heightCm": 162,
   "activityLevel": "active",
   "goal": "cutting",
-  "dietaryPreference": "vegetarian"
+  "dietaryPreference": "vegetarian",
+  "proteinPct": 30,  // opsional — kalau diisi, proteinPct+fatPct+carbPct WAJIB total 100
+  "fatPct": 20,
+  "carbPct": 50
 }
 ```
 Email dipakai sebagai kunci unik — kirim ulang dengan email yang sama untuk update profil
-dan menghitung ulang target (misal setelah berat badan berubah).
+dan menghitung ulang target (misal setelah berat badan berubah). `proteinPct`/`fatPct`/`carbPct`
+opsional — kalau tidak diisi, makro dihitung otomatis (1.8g/kg protein, 25% lemak, sisanya karbo).
 
 ### 5. Ambil profil + target aktif
 ```

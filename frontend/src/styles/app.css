@@ -134,6 +134,33 @@ select:focus {
   margin: 0;
 }
 
+.field--checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.field--checkbox input {
+  width: auto;
+}
+
+.macro-pct-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+
+.macro-pct-total {
+  grid-column: 1 / -1;
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.macro-pct-total--warn {
+  color: var(--sambal);
+}
+
 /* ---------- tombol ---------- */
 
 .btn {
@@ -288,6 +315,12 @@ select:focus {
   height: 100%;
   border-radius: 999px;
   transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.water-target {
+  margin: 14px 0 0;
+  font-size: 13px;
+  color: var(--ink-soft);
 }
 
 /* ---------- dua kolom: logger + struk ---------- */
