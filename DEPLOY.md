@@ -194,7 +194,7 @@ sudah otomatis manggil API ke backend yang di Render/Railway.
 
 Ini opsi paling pas kalau kamu tidak mau kasih kartu ke platform hosting
 manapun. Backend Express sudah dikonversi jadi Vercel Serverless Function
-(lihat `api/[...path].js` — file ini yang jalan di Vercel, `server.js` tetap
+(lihat `api/index.js` — file ini yang jalan di Vercel, `server.js` tetap
 dipakai untuk Opsi A/B/C atau dev lokal, isinya sama cuma beda cara
 di-jalankan). Database tetap Supabase seperti Langkah 0.
 
