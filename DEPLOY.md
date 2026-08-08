@@ -68,16 +68,18 @@ verifikasi connection string-nya benar sebelum lanjut deploy.)
 
 ## Realita harga hosting per Agustus 2026
 
-| Platform | Biaya | Server tidur? | Catatan |
-|---|---|---|---|
-| **Render** (free tier) + Supabase | Rp0 | Ya, tidur setelah 15 menit nganggur, bangun lagi 30-60 detik | Data sekarang **aman** karena disimpan di Supabase (bukan disk Render), jadi tidur/restart tidak lagi menghapus apa pun |
-| **Railway** (Hobby) + Supabase | ~$5/bulan (~Rp80rb) | Tidak, selalu nyala | Tetap perlu bayar cuma karena mau server yang tidak tidur/cold-start, bukan lagi demi data permanen |
+| Platform | Biaya | Minta kartu? | Server tidur? | Catatan |
+|---|---|---|---|---|
+| **Render** (free tier) + Supabase | Rp0 | Ya, verifikasi kartu (tidak di-charge selama Instance Type = Free) | Ya, tidur setelah 15 menit nganggur, bangun lagi 30-60 detik | Data sekarang **aman** karena disimpan di Supabase (bukan disk Render) |
+| **Railway** (Hobby) + Supabase | ~$5/bulan (~Rp80rb) | Ya | Tidak, selalu nyala | Bayar untuk server yang tidak cold-start, bukan lagi demi data permanen |
+| **Vercel** (frontend + backend) + Supabase | Rp0 | **Tidak** | Cold-start ringan tapi cepat (serverless) | Satu platform saja, tidak perlu kartu sama sekali — lihat Opsi D |
 
-**Rekomendasi saya:** karena data sekarang sudah permanen di Supabase
-terlepas dari platform hosting-nya, **Render free tier (Opsi A) sudah cukup**
-untuk kebanyakan kebutuhan — termasuk dipakai beneran sehari-hari, bukan
-cuma demo. Upgrade ke Railway (Opsi B) kalau kamu terganggu dengan jeda
-30-60 detik pas server bangun dari tidur.
+**Rekomendasi saya:** kalau kamu tidak keberatan verifikasi kartu (tidak
+akan di-charge di tier Free), **Render (Opsi A)** paling simpel karena
+backend jalan sebagai server biasa, satu service. Kalau **tidak mau kasih
+kartu sama sekali**, pakai **Opsi D: full Vercel** — satu-satunya opsi di
+sini yang genuinely tidak butuh kartu, karena frontend & backend jadi satu
+platform yang sama.
 
 ---
 
@@ -186,19 +188,49 @@ Misal hasilnya `https://buku-gizi-backend.onrender.com`
 Vercel kasih URL publik seperti `https://buku-gizi.vercel.app` — itu frontend-nya,
 sudah otomatis manggil API ke backend yang di Render/Railway.
 
-### Kalau nanti mau backend juga full di Vercel (tanpa Render/Railway sama sekali)
-Database-nya sudah siap untuk ini (Postgres via jaringan, bukan file lokal).
-Yang masih kurang: konversi routing Express (`src/routes/*.js`, di-mount
-lewat satu `app.listen` di `server.js`) jadi Vercel Functions per-endpoint di
-folder `api/`. Ini perubahan struktur project yang lumayan (bukan lagi sekadar
-ganti driver DB) — bilang kalau mau saya kerjakan.
+---
+
+## Opsi D: Full Vercel — frontend + backend, satu platform, tanpa kartu
+
+Ini opsi paling pas kalau kamu tidak mau kasih kartu ke platform hosting
+manapun. Backend Express sudah dikonversi jadi Vercel Serverless Function
+(lihat `api/[...path].js` — file ini yang jalan di Vercel, `server.js` tetap
+dipakai untuk Opsi A/B/C atau dev lokal, isinya sama cuma beda cara
+di-jalankan). Database tetap Supabase seperti Langkah 0.
+
+Bedanya dengan Opsi C: **cuma butuh 1 project Vercel** untuk frontend +
+backend sekaligus (bukan 2 platform terpisah), dan **root directory-nya
+folder repo itu sendiri**, bukan `frontend`.
+
+### 1. Push project ke GitHub (kalau belum, sama seperti Opsi A langkah 1)
+
+### 2. Import project di Vercel
+1. Login ke https://vercel.com (bisa pakai akun GitHub) — tidak akan diminta kartu untuk Hobby plan
+2. **Add New** → **Project** → pilih repo GitHub project ini
+3. Di step konfigurasi:
+   - **Root Directory**: biarkan default (`.`, folder repo paling atas) — **JANGAN** diubah ke `frontend` seperti Opsi C, karena Vercel perlu lihat folder `api/` yang ada di root juga
+   - **Framework Preset**: pilih **Other** (build command & output directory sudah diatur lewat `vercel.json` di repo, jadi Vercel otomatis pakai itu)
+4. Buka **Environment Variables**, tambahkan:
+   ```
+   DATABASE_URL=postgresql://...(connection string Supabase dari Langkah 0)
+   ```
+   (frontend di setup ini tidak butuh `VITE_API_URL` — dia manggil `/api` relatif, karena frontend & backend sekarang satu origin/domain yang sama)
+5. Klik **Deploy**
+
+Tunggu ±1-2 menit, Vercel kasih 1 URL publik seperti `https://buku-gizi.vercel.app`
+yang sudah melayani frontend DAN `/api/*` sekaligus.
+
+**Kalau kamu sudah kadung bikin project Vercel dengan Root Directory =
+`frontend` (Opsi C)**: hapus project itu (**Settings** → **Advanced** →
+**Delete Project**) dan buat ulang dari langkah 2 di atas dengan Root
+Directory default — Root Directory tidak bisa diubah setelah project dibuat.
 
 ---
 
 ## Cara tes hasil deploy
 
-Buka URL yang didapat dari Render/Railway (atau Vercel kalau Opsi C) di HP
-atau browser:
+Buka URL yang didapat dari Render/Railway/Vercel (tergantung opsi yang
+kamu pilih) di HP atau browser:
 1. Harus langsung muncul form onboarding "Buku Gizi"
 2. Isi profil → harus lanjut ke dashboard dengan cincin kalori
 3. Coba catat makanan → refresh halaman, atau buka lagi besok → catatan

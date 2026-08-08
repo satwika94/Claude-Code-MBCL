@@ -229,10 +229,13 @@ GET /api/foods?search=tempe&diet=vegetarian&limit=8
 ## Struktur folder
 ```
 nutrition-app/
-├── server.js                     # Entry point backend (serve API + frontend build)
+├── server.js                     # Entry point mode server biasa (Render/Railway/Docker/dev lokal)
+├── api/
+│   └── [...path].js               # Entry point mode Vercel Serverless Function (full-stack di Vercel)
+├── vercel.json                    # Config build frontend + expose folder api/ untuk mode Vercel full-stack
 ├── Dockerfile                     # Build image untuk deploy (backend + frontend jadi 1)
 ├── .dockerignore
-├── DEPLOY.md                      # Panduan deploy ke Render/Railway + perbandingan biaya
+├── DEPLOY.md                      # Panduan deploy ke Render/Railway/Vercel + perbandingan biaya
 ├── railway.json                   # Konfigurasi build/start untuk Railway
 ├── render.yaml                    # Konfigurasi build/start untuk Render
 ├── db/
@@ -241,6 +244,7 @@ nutrition-app/
 │   ├── foods_data.json            # Data 1.343 bahan makanan (sumber: TKPI)
 │   └── convert_tkpi_xlsx.py       # Script konversi dataset TKPI xlsx -> JSON
 ├── src/
+│   ├── app.js                     # Setup Express app (routes, static frontend, DB pool) — dipakai bareng server.js & api/
 │   ├── services/
 │   │   ├── nutritionCalculator.js  # Logika BMR/TDEE/makro
 │   │   └── menuRecommender.js      # Logika rekomendasi menu (rule-based, seimbang gizi)
@@ -277,9 +281,6 @@ nutrition-app/
 3. Riwayat baru menghitung 7 hari terakhir dari hari ini — belum ada navigasi ke
    minggu/bulan sebelumnya
 4. Perluas lagi database makanan (makanan daerah lain, produk kemasan dengan barcode, dll)
-5. Konversi backend Express jadi Vercel Functions supaya bisa full serverless di Vercel
-   tanpa Render/Railway terpisah — database (PostgreSQL via jaringan) sudah siap untuk ini,
-   lihat catatan di `DEPLOY.md`
 
 ## Catatan penting
 - Rumus & angka gizi di sini adalah estimasi standar untuk keperluan prototipe.
