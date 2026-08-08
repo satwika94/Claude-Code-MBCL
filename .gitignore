@@ -1,5 +1,4 @@
 node_modules/
-db/nutrition.db
 .env
 server.log
 frontend/node_modules/

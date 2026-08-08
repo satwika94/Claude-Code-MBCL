@@ -8,7 +8,7 @@ module.exports = (db) => {
    * Buat profil user baru, hitung kebutuhan gizi, simpan sebagai target aktif.
    * Body: { name, email, gender, age, weightKg, heightCm, activityLevel, goal, dietaryPreference }
    */
-  router.post("/users", (req, res) => {
+  router.post("/users", async (req, res) => {
     const {
       name, email, gender, age, weightKg, heightCm,
       activityLevel, goal, dietaryPreference = "none",
@@ -28,26 +28,22 @@ module.exports = (db) => {
         heightCm: Number(heightCm), activityLevel, goal,
       });
 
-      const insertUser = db.prepare(`
+      const { rows } = await db.query(`
         INSERT INTO users (name, email, gender, age, weight_kg, height_cm, activity_level, goal, dietary_preference)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(email) DO UPDATE SET
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        ON CONFLICT (email) DO UPDATE SET
           name=excluded.name, gender=excluded.gender, age=excluded.age,
           weight_kg=excluded.weight_kg, height_cm=excluded.height_cm,
           activity_level=excluded.activity_level, goal=excluded.goal,
           dietary_preference=excluded.dietary_preference
-      `);
-      const info = insertUser.run(name, email, gender, Number(age), Number(weightKg),
-        Number(heightCm), activityLevel, goal, dietaryPreference);
+        RETURNING *
+      `, [name, email, gender, Number(age), Number(weightKg), Number(heightCm), activityLevel, goal, dietaryPreference]);
+      const user = rows[0];
 
-      // Ambil user_id (baik baru insert maupun sudah ada / update by email)
-      const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email);
-
-      const insertTarget = db.prepare(`
+      await db.query(`
         INSERT INTO daily_targets (user_id, bmr, tdee, target_calories, target_protein_g, target_fat_g, target_carb_g)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-      `);
-      insertTarget.run(user.id, needs.bmr, needs.tdee, needs.target_calories, needs.protein_g, needs.fat_g, needs.carb_g);
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `, [user.id, needs.bmr, needs.tdee, needs.target_calories, needs.protein_g, needs.fat_g, needs.carb_g]);
 
       res.json({ success: true, data: { user, nutrition_needs: needs } });
     } catch (err) {
@@ -59,15 +55,16 @@ module.exports = (db) => {
    * GET /api/users/:id
    * Ambil profil user + target gizi aktif (terbaru)
    */
-  router.get("/users/:id", (req, res) => {
-    const user = db.prepare("SELECT * FROM users WHERE id = ?").get(req.params.id);
+  router.get("/users/:id", async (req, res) => {
+    const { rows: userRows } = await db.query("SELECT * FROM users WHERE id = $1", [req.params.id]);
+    const user = userRows[0];
     if (!user) return res.status(404).json({ error: "User tidak ditemukan" });
 
-    const target = db.prepare(`
-      SELECT * FROM daily_targets WHERE user_id = ? ORDER BY calculated_at DESC LIMIT 1
-    `).get(req.params.id);
+    const { rows: targetRows } = await db.query(`
+      SELECT * FROM daily_targets WHERE user_id = $1 ORDER BY calculated_at DESC LIMIT 1
+    `, [req.params.id]);
 
-    res.json({ success: true, data: { user, target } });
+    res.json({ success: true, data: { user, target: targetRows[0] } });
   });
 
   return router;

@@ -1,7 +1,7 @@
 # Nutrition App Prototype
 
 Prototipe backend untuk **kalkulator kebutuhan gizi + rekomendasi menu harian**.
-Dibangun dengan Node.js + Express + SQLite (mudah dijalankan tanpa setup database server).
+Dibangun dengan Node.js + Express + PostgreSQL (mis. Supabase/Neon, diakses lewat env var `DATABASE_URL`).
 
 ## Fitur yang sudah jalan
 - Kalkulasi BMR (Mifflin-St Jeor) → TDEE → target kalori sesuai tujuan (cutting/maintenance/bulking)
@@ -236,11 +236,10 @@ nutrition-app/
 ├── railway.json                   # Konfigurasi build/start untuk Railway
 ├── render.yaml                    # Konfigurasi build/start untuk Render
 ├── db/
-│   ├── schema.sql                 # Skema tabel database
-│   ├── seed.js                    # Script inisialisasi + load data dari JSON (dipakai juga untuk auto-seed)
+│   ├── schema.sql                 # Skema tabel database (PostgreSQL)
+│   ├── seed.js                    # Jalankan schema.sql + load data dari JSON (dipakai juga untuk auto-seed)
 │   ├── foods_data.json            # Data 1.343 bahan makanan (sumber: TKPI)
-│   ├── convert_tkpi_xlsx.py       # Script konversi dataset TKPI xlsx -> JSON
-│   └── nutrition.db               # File database (dibuat otomatis; override via env DB_PATH)
+│   └── convert_tkpi_xlsx.py       # Script konversi dataset TKPI xlsx -> JSON
 ├── src/
 │   ├── services/
 │   │   ├── nutritionCalculator.js  # Logika BMR/TDEE/makro
@@ -277,10 +276,10 @@ nutrition-app/
    di `generateRecipeNarrativePlaceholder()` pada `menuRecommender.js`)
 3. Riwayat baru menghitung 7 hari terakhir dari hari ini — belum ada navigasi ke
    minggu/bulan sebelumnya
-4. Migrasi dari SQLite ke **PostgreSQL** untuk production (skema SQL sudah kompatibel,
-   tinggal ganti `AUTOINCREMENT` → `SERIAL`/`IDENTITY`) — juga membuka opsi hosting
-   gratis permanen, lihat catatan di `DEPLOY.md`
-5. Perluas lagi database makanan (makanan daerah lain, produk kemasan dengan barcode, dll)
+4. Perluas lagi database makanan (makanan daerah lain, produk kemasan dengan barcode, dll)
+5. Konversi backend Express jadi Vercel Functions supaya bisa full serverless di Vercel
+   tanpa Render/Railway terpisah — database (PostgreSQL via jaringan) sudah siap untuk ini,
+   lihat catatan di `DEPLOY.md`
 
 ## Catatan penting
 - Rumus & angka gizi di sini adalah estimasi standar untuk keperluan prototipe.

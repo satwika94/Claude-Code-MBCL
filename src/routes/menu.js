@@ -11,7 +11,7 @@ module.exports = (db) => {
    * Menggabungkan kalkulasi kebutuhan gizi + rekomendasi menu harian
    * dalam satu panggilan (memudahkan untuk prototipe/testing).
    */
-  router.post("/recommend-menu", (req, res) => {
+  router.post("/recommend-menu", async (req, res) => {
     const {
       gender,
       age,
@@ -32,7 +32,7 @@ module.exports = (db) => {
         goal,
       });
 
-      const foods = db.prepare("SELECT * FROM foods").all();
+      const { rows: foods } = await db.query("SELECT * FROM foods");
       const { menu, totals } = generateDailyMenu(
         foods,
         needs.target_calories,
@@ -57,8 +57,9 @@ module.exports = (db) => {
    * Sama seperti POST /api/recommend-menu, tapi profil diambil dari
    * data user yang tersimpan (tidak perlu kirim ulang semua field).
    */
-  router.get("/recommend-menu/:userId", (req, res) => {
-    const user = db.prepare("SELECT * FROM users WHERE id = ?").get(req.params.userId);
+  router.get("/recommend-menu/:userId", async (req, res) => {
+    const { rows: userRows } = await db.query("SELECT * FROM users WHERE id = $1", [req.params.userId]);
+    const user = userRows[0];
     if (!user) return res.status(404).json({ error: "User tidak ditemukan" });
 
     try {
@@ -71,7 +72,7 @@ module.exports = (db) => {
         goal: user.goal,
       });
 
-      const foods = db.prepare("SELECT * FROM foods").all();
+      const { rows: foods } = await db.query("SELECT * FROM foods");
       const { menu, totals } = generateDailyMenu(
         foods,
         needs.target_calories,

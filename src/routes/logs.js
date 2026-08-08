@@ -7,25 +7,26 @@ module.exports = (db) => {
    * Catat konsumsi satu item makanan.
    * Body: { userId, foodId, portionG, mealType? }
    */
-  router.post("/log-meal", (req, res) => {
+  router.post("/log-meal", async (req, res) => {
     const { userId, foodId, portionG } = req.body;
     if (!userId || !foodId || !portionG) {
       return res.status(400).json({ error: "userId, foodId, dan portionG wajib diisi" });
     }
 
-    const food = db.prepare("SELECT * FROM foods WHERE id = ?").get(foodId);
+    const { rows: foodRows } = await db.query("SELECT * FROM foods WHERE id = $1", [foodId]);
+    const food = foodRows[0];
     if (!food) return res.status(404).json({ error: "Makanan tidak ditemukan" });
 
-    const insert = db.prepare(`
-      INSERT INTO meal_logs (user_id, food_id, portion_g) VALUES (?, ?, ?)
-    `);
-    const info = insert.run(userId, foodId, Number(portionG));
+    const { rows } = await db.query(
+      "INSERT INTO meal_logs (user_id, food_id, portion_g) VALUES ($1, $2, $3) RETURNING id",
+      [userId, foodId, Number(portionG)]
+    );
 
     const factor = Number(portionG) / 100;
     res.json({
       success: true,
       data: {
-        log_id: info.lastInsertRowid,
+        log_id: rows[0].id,
         food_name: food.name,
         portion_g: Number(portionG),
         calories: Math.round(food.calories_per_100g * factor),
@@ -39,9 +40,9 @@ module.exports = (db) => {
   /**
    * DELETE /api/log-meal/:id
    */
-  router.delete("/log-meal/:id", (req, res) => {
-    const info = db.prepare("DELETE FROM meal_logs WHERE id = ?").run(req.params.id);
-    if (info.changes === 0) return res.status(404).json({ error: "Log tidak ditemukan" });
+  router.delete("/log-meal/:id", async (req, res) => {
+    const { rowCount } = await db.query("DELETE FROM meal_logs WHERE id = $1", [req.params.id]);
+    if (rowCount === 0) return res.status(404).json({ error: "Log tidak ditemukan" });
     res.json({ success: true });
   });
 
@@ -49,16 +50,16 @@ module.exports = (db) => {
    * GET /api/meal-logs/:userId?date=YYYY-MM-DD
    * Daftar log konsumsi user pada tanggal tertentu (default: hari ini)
    */
-  router.get("/meal-logs/:userId", (req, res) => {
+  router.get("/meal-logs/:userId", async (req, res) => {
     const date = req.query.date || new Date().toISOString().slice(0, 10);
-    const logs = db.prepare(`
+    const { rows: logs } = await db.query(`
       SELECT ml.id, ml.portion_g, ml.logged_at, f.id as food_id, f.name as food_name,
              f.calories_per_100g, f.protein_per_100g, f.fat_per_100g, f.carb_per_100g
       FROM meal_logs ml
       JOIN foods f ON f.id = ml.food_id
-      WHERE ml.user_id = ? AND date(ml.logged_at) = date(?)
+      WHERE ml.user_id = $1 AND ml.logged_at::date = $2::date
       ORDER BY ml.logged_at ASC
-    `).all(req.params.userId, date);
+    `, [req.params.userId, date]);
 
     const items = logs.map((l) => {
       const factor = l.portion_g / 100;
@@ -82,21 +83,22 @@ module.exports = (db) => {
    * GET /api/daily-summary/:userId?date=YYYY-MM-DD
    * Target gizi aktif user + total konsumsi hari ini + sisa (remaining)
    */
-  router.get("/daily-summary/:userId", (req, res) => {
+  router.get("/daily-summary/:userId", async (req, res) => {
     const date = req.query.date || new Date().toISOString().slice(0, 10);
     const userId = req.params.userId;
 
-    const target = db.prepare(`
-      SELECT * FROM daily_targets WHERE user_id = ? ORDER BY calculated_at DESC LIMIT 1
-    `).get(userId);
+    const { rows: targetRows } = await db.query(`
+      SELECT * FROM daily_targets WHERE user_id = $1 ORDER BY calculated_at DESC LIMIT 1
+    `, [userId]);
+    const target = targetRows[0];
     if (!target) return res.status(404).json({ error: "Target gizi user belum ada. Buat profil terlebih dahulu." });
 
-    const logs = db.prepare(`
+    const { rows: logs } = await db.query(`
       SELECT ml.portion_g, f.calories_per_100g, f.protein_per_100g, f.fat_per_100g, f.carb_per_100g
       FROM meal_logs ml
       JOIN foods f ON f.id = ml.food_id
-      WHERE ml.user_id = ? AND date(ml.logged_at) = date(?)
-    `).all(userId, date);
+      WHERE ml.user_id = $1 AND ml.logged_at::date = $2::date
+    `, [userId, date]);
 
     const consumed = logs.reduce((acc, l) => {
       const factor = l.portion_g / 100;
@@ -135,28 +137,31 @@ module.exports = (db) => {
    * Total kalori & makro per hari untuk N hari terakhir (termasuk hari
    * tanpa catatan sama sekali, supaya grafik tetap punya 7 titik).
    */
-  router.get("/history/:userId", (req, res) => {
+  router.get("/history/:userId", async (req, res) => {
     const userId = req.params.userId;
     const days = Math.min(Math.max(Number(req.query.days) || 7, 1), 30);
 
-    const target = db.prepare(`
-      SELECT * FROM daily_targets WHERE user_id = ? ORDER BY calculated_at DESC LIMIT 1
-    `).get(userId);
+    const { rows: targetRows } = await db.query(`
+      SELECT * FROM daily_targets WHERE user_id = $1 ORDER BY calculated_at DESC LIMIT 1
+    `, [userId]);
+    const target = targetRows[0];
     if (!target) return res.status(404).json({ error: "Target gizi user belum ada." });
 
-    const rows = db.prepare(`
-      SELECT date(ml.logged_at) as log_date,
+    const { rows } = await db.query(`
+      SELECT ml.logged_at::date as log_date,
              SUM(f.calories_per_100g * ml.portion_g / 100.0) as calories,
              SUM(f.protein_per_100g * ml.portion_g / 100.0) as protein_g,
              SUM(f.fat_per_100g * ml.portion_g / 100.0) as fat_g,
              SUM(f.carb_per_100g * ml.portion_g / 100.0) as carb_g
       FROM meal_logs ml
       JOIN foods f ON f.id = ml.food_id
-      WHERE ml.user_id = ? AND date(ml.logged_at) >= date('now', ?)
-      GROUP BY date(ml.logged_at)
-    `).all(userId, `-${days - 1} days`);
+      WHERE ml.user_id = $1 AND ml.logged_at::date >= (CURRENT_DATE - $2::integer)
+      GROUP BY ml.logged_at::date
+    `, [userId, days - 1]);
 
-    const byDate = Object.fromEntries(rows.map((r) => [r.log_date, r]));
+    const byDate = Object.fromEntries(
+      rows.map((r) => [r.log_date.toISOString().slice(0, 10), r])
+    );
 
     const series = [];
     for (let i = days - 1; i >= 0; i--) {
