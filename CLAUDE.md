@@ -21,9 +21,9 @@ npm run seed                                 # jalankan schema.sql + isi/update 
 ```
 
 ## Arsitektur singkat
-- `src/app.js` — bikin `pg.Pool` dari `DATABASE_URL`, mount semua route di bawah `/api`, serve `frontend/dist` kalau ada, auto-seed database kalau tabel `foods` masih kosong. Dipakai bareng oleh `server.js` (Render/Railway/Docker/dev lokal — panggil `app.listen()`) DAN `api/[...path].js` (Vercel Serverless Function — export handler tanpa `listen()`, Vercel yang urus lifecycle-nya). Kalau ubah routing/middleware, ubah di `src/app.js`, bukan duplikat di dua tempat
+- `src/app.js` — bikin `pg.Pool` dari `DATABASE_URL`, mount semua route di bawah `/api`, serve `frontend/dist` kalau ada, auto-seed database kalau tabel `foods` masih kosong. Dipakai bareng oleh `server.js` (Render/Railway/Docker/dev lokal — panggil `app.listen()`) DAN `api/index.js` (Vercel Serverless Function — export handler tanpa `listen()`, Vercel yang urus lifecycle-nya). Kalau ubah routing/middleware, ubah di `src/app.js`, bukan duplikat di dua tempat
 - `server.js` — entry point mode server biasa (satu proses long-running), dipakai `npm start`
-- `api/[...path].js` — entry point mode Vercel Functions, dipakai kalau full-stack (frontend+backend) di-deploy ke Vercel sekaligus (lihat `DEPLOY.md` Opsi D); `vercel.json` di root yang atur build frontend + expose folder `api/` ini
+- `api/index.js` — entry point mode Vercel Functions, dipakai kalau full-stack (frontend+backend) di-deploy ke Vercel sekaligus (lihat `DEPLOY.md` Opsi D); `vercel.json` di root yang atur build frontend + expose folder `api/` ini
 - `src/services/nutritionCalculator.js` — rumus BMR/TDEE/makro (Mifflin-St Jeor), murni fungsi tanpa DB
 - `src/services/menuRecommender.js` — logika susun menu harian. **Penting**: tiap makan utama (sarapan/siang/malam) WAJIB 4 kelompok (karbohidrat+protein+sayur+lemak), cemilan WAJIB dari kelompok `buah`/`camilan` saja — jangan comot acak dari semua kategori kalau mengubah logika ini
 - `src/routes/*.js` — tiap file terima `db` (instance `pg.Pool`) via factory function, kecuali `calculate.js` yang stateless. Query pakai `await db.query(...)`, bukan `db.prepare(...).get/all/run` gaya better-sqlite3 lama

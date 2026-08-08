@@ -231,7 +231,7 @@ GET /api/foods?search=tempe&diet=vegetarian&limit=8
 nutrition-app/
 ├── server.js                     # Entry point mode server biasa (Render/Railway/Docker/dev lokal)
 ├── api/
-│   └── [...path].js               # Entry point mode Vercel Serverless Function (full-stack di Vercel)
+│   └── index.js               # Entry point mode Vercel Serverless Function (full-stack di Vercel)
 ├── vercel.json                    # Config build frontend + expose folder api/ untuk mode Vercel full-stack
 ├── Dockerfile                     # Build image untuk deploy (backend + frontend jadi 1)
 ├── .dockerignore
