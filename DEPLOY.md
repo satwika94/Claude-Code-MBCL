@@ -2,45 +2,91 @@
 
 Aplikasi ini sudah disiapkan supaya bisa deploy sebagai **satu service saja**
 (backend Express men-serve hasil build frontend React, jadi cuma butuh 1 URL,
-bukan 2 server terpisah).
+bukan 2 server terpisah). Database-nya **PostgreSQL** yang diakses lewat
+jaringan (mis. Supabase/Neon) — bukan file SQLite lokal — jadi datanya aman
+disimpan di luar disk service backend.
 
 ## Soal siapa yang menjalankan langkah-langkah ini
 
 Panduan di bawah ini ditulis untuk kamu jalankan sendiri (copy-paste ke
-terminal). Kalau kamu punya **Claude Code** — beda dengan Claude di chat ini,
-Claude Code jalan di komputer kamu sendiri dengan akses jaringan & kredensial
-asli — kamu bisa minta Claude Code langsung mengeksekusi seluruh proses ini
-untukmu: push ke GitHub, login CLI Railway/Vercel, deploy, sampai generate
-domain publik. Tinggal buka folder project ini di Claude Code dan bilang
-misalnya *"deploy aplikasi ini ke Railway sesuai DEPLOY.md"*.
+terminal, atau klik-klik di dashboard). Kalau kamu punya **Claude Code** —
+beda dengan Claude di chat ini, Claude Code jalan di komputer kamu sendiri
+dengan akses jaringan & kredensial asli — kamu bisa minta Claude Code
+langsung mengeksekusi seluruh proses ini untukmu: push ke GitHub, login CLI
+Railway/Vercel, deploy, sampai generate domain publik. Tinggal buka folder
+project ini di Claude Code dan bilang misalnya *"deploy aplikasi ini ke
+Railway sesuai DEPLOY.md"*.
 
-## Realita harga hosting per Agustus 2026 (baca dulu sebelum pilih)
+Provisioning **Supabase** butuh login interaktif di browser, jadi itu bagian
+yang harus kamu klik sendiri di dashboard — Claude (baik di chat ini maupun
+Claude Code) tidak bisa login akun pihak ketiga untukmu.
 
-Sayangnya sudah tidak ada lagi platform yang "gratis selamanya + penyimpanan
-permanen" untuk app kecil seperti ini:
+## Langkah 0 (WAJIB untuk semua opsi): buat database Supabase
 
-| Platform | Biaya | Penyimpanan permanen (buat SQLite) | Catatan |
-|---|---|---|---|
-| **Render** (free tier) | Rp0 | ❌ Tidak ada di free tier | Server "tidur" setelah 15 menit nganggur, nyala lagi 30-60 detik pas diakses. Data user & log makan **hilang tiap restart** (tapi database makanan otomatis ke-seed ulang) |
-| **Railway** (Hobby) | ~$5/bulan (~Rp80rb) | ✅ Ada (volume) | Tidak nyala-mati, data permanen selama masih bayar |
-| **Fly.io** | ~$2-5/bulan | ✅ Ada (volume) | Sudah tidak ada free tier permanen sejak 2024 |
+Semua opsi deploy di bawah butuh `DATABASE_URL` yang mengarah ke database
+Postgres. Rekomendasi: [Supabase](https://supabase.com), free tier-nya
+genuinely permanen (tidak seperti disk Render free tier yang hilang tiap
+restart).
 
-**Rekomendasi saya:**
-- **Buat sekadar demo/nunjukkin ke orang lain** → pakai **Render free tier** (Opsi A). Gratis, tapi jangan simpan data penting di situ karena bisa hilang.
-- **Mau benar-benar dipakai nge-track gizi harian** → pakai **Railway Hobby** (Opsi B), ~Rp80rb/bulan, datanya aman.
+1. Buka https://supabase.com → **Sign in** (bisa pakai akun GitHub)
+2. **New project** → pilih organization (atau buat baru) → isi:
+   - **Name**: bebas, misal `buku-gizi`
+   - **Database Password**: buat password kuat, **simpan baik-baik** (dibutuhkan di connection string, tidak ditampilkan lagi setelah ini)
+   - **Region**: pilih yang terdekat (Southeast Asia / Singapore paling dekat ke Indonesia)
+3. Klik **Create new project**, tunggu ±2 menit sampai provisioning selesai
+4. Ambil connection string: **Project Settings** (ikon gear) → **Database** →
+   bagian **Connection string** → tab **URI**
+   - Pakai mode **Transaction** (connection pooling, port `6543`) — lebih
+     cocok untuk backend serverless/hosting kecil dibanding direct
+     connection (port `5432`)
+   - Hasilnya kira-kira:
+     `postgresql://postgres.xxxxxxxxxxxx:[YOUR-PASSWORD]@aws-0-REGION.pooler.supabase.com:6543/postgres`
+   - Ganti `[YOUR-PASSWORD]` dengan password dari langkah 2
+5. **Simpan connection string ini** — dipakai sebagai env var `DATABASE_URL`
+   di semua opsi deploy di bawah. **Jangan pernah commit connection string
+   asli ke git/GitHub** — isi cuma di dashboard hosting (Render/Railway/Vercel)
+   atau di `.env` lokal (sudah di-`.gitignore`).
+
+### Isi schema & data awal (jalankan sekali, dari komputer kamu)
+
+Setelah dapat `DATABASE_URL`, isi database dengan skema tabel + 1.343 data
+makanan dari TKPI:
+
+```bash
+cd nutrition-app
+npm install
+echo "DATABASE_URL=postgresql://...(connection string dari langkah di atas)" >> .env
+npm run seed
+```
+
+Kalau berhasil akan muncul `✅ 1343 data makanan diproses...`. (Backend juga
+otomatis menjalankan seed ini sendiri saat pertama kali start kalau tabel
+`foods` masih kosong, jadi langkah manual ini opsional — tapi enak buat
+verifikasi connection string-nya benar sebelum lanjut deploy.)
 
 ---
 
-## Opsi A: Render (gratis, untuk demo)
+## Realita harga hosting per Agustus 2026
 
-Render deploy dari repo GitHub. Kalau kamu belum punya repo untuk project ini:
+| Platform | Biaya | Server tidur? | Catatan |
+|---|---|---|---|
+| **Render** (free tier) + Supabase | Rp0 | Ya, tidur setelah 15 menit nganggur, bangun lagi 30-60 detik | Data sekarang **aman** karena disimpan di Supabase (bukan disk Render), jadi tidur/restart tidak lagi menghapus apa pun |
+| **Railway** (Hobby) + Supabase | ~$5/bulan (~Rp80rb) | Tidak, selalu nyala | Tetap perlu bayar cuma karena mau server yang tidak tidur/cold-start, bukan lagi demi data permanen |
 
-### 1. Push project ke GitHub
+**Rekomendasi saya:** karena data sekarang sudah permanen di Supabase
+terlepas dari platform hosting-nya, **Render free tier (Opsi A) sudah cukup**
+untuk kebanyakan kebutuhan — termasuk dipakai beneran sehari-hari, bukan
+cuma demo. Upgrade ke Railway (Opsi B) kalau kamu terganggu dengan jeda
+30-60 detik pas server bangun dari tidur.
+
+---
+
+## Opsi A: Render (gratis, data permanen via Supabase)
+
+### 1. Push project ke GitHub (kalau belum)
 ```bash
 cd nutrition-app
-git init
-git add .
-git commit -m "Initial commit"
+git init && git add . && git commit -m "Initial commit"
 ```
 Buat repo baru kosong di https://github.com/new (jangan centang "add README"),
 lalu:
@@ -58,21 +104,21 @@ git push -u origin main
    - **Build Command**: `npm install && npm run build`
    - **Start Command**: `npm start`
    - **Instance Type**: Free
-5. Klik **Create Web Service**
+5. Buka **Environment Variables**, tambahkan:
+   ```
+   DATABASE_URL=postgresql://...(connection string Supabase dari Langkah 0)
+   ```
+6. Klik **Create Web Service**
 
 Render akan build & jalankan otomatis. Setelah selesai (±2-5 menit), kamu dapat
 URL publik seperti `https://buku-gizi-xxxx.onrender.com` — buka di HP, langsung
-bisa dipakai.
-
-**Catatan penting**: karena free tier Render tidak punya disk permanen, tiap
-kali service restart (nganggur 15 menit lalu diakses lagi, atau redeploy),
-`nutrition.db` dibuat ulang dari nol — daftar makanan otomatis kembali terisi
-(auto-seed), tapi **akun user & riwayat makan yang sudah dicatat akan hilang**.
-Cocok untuk coba-coba/demo, kurang cocok untuk dipakai harian.
+bisa dipakai. Server bisa "tidur" setelah 15 menit nganggur (bangun lagi
+30-60 detik pas diakses), tapi data akun/riwayat makan **tidak hilang** —
+tersimpan permanen di Supabase.
 
 ---
 
-## Opsi B: Railway (~Rp80rb/bulan, data permanen)
+## Opsi B: Railway (~Rp80rb/bulan, tanpa cold-start)
 
 Railway punya CLI yang bisa deploy langsung dari folder di komputer, tanpa
 perlu setup GitHub dulu.
@@ -91,57 +137,38 @@ railway init          # buat project baru, ikuti prompt (kasih nama bebas)
 railway up             # upload & deploy folder ini
 ```
 
-### 3. Set Build & Start Command
+### 3. Set Build & Start Command + env var
 Buka dashboard Railway (`railway open`) → pilih service → tab **Settings**:
 - **Build Command**: `npm install && npm run build`
 - **Start Command**: `npm start`
 
-### 4. Tambah persistent volume (WAJIB, supaya data tidak hilang)
-Di dashboard Railway → service kamu → tab **Volumes** → **New Volume**:
-- Mount path: `/data`
-
-Lalu tab **Variables**, tambah environment variable:
+Lalu tab **Variables**, tambah:
 ```
-DB_PATH=/data/nutrition.db
+DATABASE_URL=postgresql://...(connection string Supabase dari Langkah 0)
 ```
-(Server sudah didesain untuk baca `DB_PATH` dari environment variable — lihat
-`server.js`.)
 
-### 5. Generate domain publik
+### 4. Generate domain publik
 Tab **Settings** → **Networking** → **Generate Domain**. Railway kasih URL
 seperti `https://buku-gizi-production.up.railway.app`.
 
-Setelah ini, redeploy/restart tidak akan menghapus data karena SQLite-nya
-tersimpan di volume yang persistent.
-
 ---
 
-## Opsi C: Vercel (frontend) + Railway/Render (backend)
+## Opsi C: Vercel (frontend) + Render/Railway (backend)
 
-Kalau kamu spesifik ingin pakai **Vercel**: perlu tahu dulu, Vercel itu
-platform *serverless* — cocok banget untuk frontend statis, tapi **tidak
-cocok untuk backend Express+SQLite kita apa adanya**. Alasannya: fungsi
-serverless Vercel tidak punya filesystem permanen, jadi tiap request bisa
-kena instance berbeda dan tulisan ke file `nutrition.db` tidak akan
-konsisten/bisa hilang. ([sumber resmi Vercel](https://vercel.com/kb/guide/is-sqlite-supported-in-vercel))
-
-Jalan keluarnya, **pisah deploy-nya jadi 2**:
-- **Backend** (Express + SQLite, tidak berubah) → tetap ke Railway/Render seperti Opsi A/B di atas
+Vercel itu platform *serverless* — cocok banget untuk frontend statis, tapi
+backend Express kita (mount semua route lewat satu `app.listen`, bukan
+per-function) belum dikonversi jadi Vercel Functions. Jalan keluarnya,
+**pisah deploy-nya jadi 2**:
+- **Backend** (Express, connect ke Supabase lewat `DATABASE_URL`) → ke Render/Railway seperti Opsi A/B di atas
 - **Frontend** (React) → ke Vercel, dihubungkan ke backend lewat env var
 
 Frontend sudah disiapkan untuk mode ini (`frontend/src/api.js` baca
 `VITE_API_URL`). Langkahnya:
 
 ### 1. Deploy backend dulu (ikuti Opsi A atau B), catat URL-nya
-Misal hasilnya `https://buku-gizi-backend.up.railway.app`
+Misal hasilnya `https://buku-gizi-backend.onrender.com`
 
-### 2. Push project ke GitHub (kalau belum)
-```bash
-cd nutrition-app
-git init && git add . && git commit -m "Initial commit"
-git remote add origin https://github.com/USERNAME/NAMA-REPO.git
-git branch -M main && git push -u origin main
-```
+### 2. Push project ke GitHub (kalau belum, sama seperti Opsi A langkah 1)
 
 ### 3. Import project di Vercel
 1. Login ke https://vercel.com (bisa pakai akun GitHub)
@@ -151,39 +178,29 @@ git branch -M main && git push -u origin main
    - **Framework Preset**: Vite (biasanya otomatis terdeteksi)
 4. Buka **Environment Variables**, tambahkan:
    ```
-   VITE_API_URL=https://buku-gizi-backend.up.railway.app/api
+   VITE_API_URL=https://buku-gizi-backend.onrender.com/api
    ```
    (ganti dengan URL backend kamu dari langkah 1, jangan lupa akhiran `/api`)
 5. Klik **Deploy**
 
 Vercel kasih URL publik seperti `https://buku-gizi.vercel.app` — itu frontend-nya,
-sudah otomatis manggil API ke backend yang di Railway/Render.
+sudah otomatis manggil API ke backend yang di Render/Railway.
 
-### Kalau nanti mau backend juga full di Vercel
-Itu berarti migrasi dari SQLite ke database yang bisa diakses lewat jaringan
-(SQLite-compatible: [Turso](https://turso.tech); atau Postgres: Neon/Supabase,
-keduanya bisa diprovision 1 command lewat `vercel install neon`), plus ubah
-routes Express jadi Vercel Functions. Ini perubahan arsitektur yang lumayan,
-belum diimplementasikan di prototipe ini — bilang kalau mau saya kerjakan.
+### Kalau nanti mau backend juga full di Vercel (tanpa Render/Railway sama sekali)
+Database-nya sudah siap untuk ini (Postgres via jaringan, bukan file lokal).
+Yang masih kurang: konversi routing Express (`src/routes/*.js`, di-mount
+lewat satu `app.listen` di `server.js`) jadi Vercel Functions per-endpoint di
+folder `api/`. Ini perubahan struktur project yang lumayan (bukan lagi sekadar
+ganti driver DB) — bilang kalau mau saya kerjakan.
 
 ---
 
 ## Cara tes hasil deploy
 
-Buka URL yang didapat dari Render/Railway di HP atau browser:
+Buka URL yang didapat dari Render/Railway (atau Vercel kalau Opsi C) di HP
+atau browser:
 1. Harus langsung muncul form onboarding "Buku Gizi"
 2. Isi profil → harus lanjut ke dashboard dengan cincin kalori
-3. Coba catat makanan → refresh halaman → catatan harus tetap ada (kalau di
-   Railway dengan volume; kalau di Render free tier, catatan hilang setelah
-   service tidur & bangun lagi — itu wajar sesuai catatan di atas)
-
-## Kalau nanti mau upgrade ke solusi gratis permanen
-
-Ada jalan supaya bisa gratis selamanya TANPA kehilangan data: pindah dari
-SQLite ke **PostgreSQL gratis** (mis. [Neon](https://neon.tech) atau
-[Supabase](https://supabase.com), keduanya punya free tier database yang
-genuinely permanen), lalu tetap pakai Render free tier untuk web service-nya
-(data disimpan di database eksternal, bukan disk lokal, jadi aman meski
-service Render sendiri restart). Ini butuh sedikit perubahan kode
-(`better-sqlite3` → `pg`), belum diimplementasikan di prototipe ini — bilang
-kalau mau saya kerjakan.
+3. Coba catat makanan → refresh halaman, atau buka lagi besok → catatan
+   harus tetap ada (data tersimpan di Supabase, bukan disk backend, jadi
+   aman dari restart/cold-start platform manapun)

@@ -1,12 +1,11 @@
 -- ============================================
 -- SKEMA DATABASE: Nutrition App Prototype
--- Kompatibel SQLite. Untuk PostgreSQL tinggal
--- ganti AUTOINCREMENT -> SERIAL/IDENTITY.
+-- PostgreSQL (mis. Supabase / Neon).
 -- ============================================
 
 -- Data profil pengguna
 CREATE TABLE IF NOT EXISTS users (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id SERIAL PRIMARY KEY,
   name TEXT NOT NULL,
   email TEXT UNIQUE NOT NULL,
   gender TEXT CHECK(gender IN ('male', 'female')) NOT NULL,
@@ -18,12 +17,12 @@ CREATE TABLE IF NOT EXISTS users (
   )) NOT NULL,
   goal TEXT CHECK(goal IN ('cutting', 'maintenance', 'bulking')) NOT NULL,
   dietary_preference TEXT DEFAULT 'none', -- vegetarian, vegan, none, dll
-  created_at TEXT DEFAULT (datetime('now'))
+  created_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- Target kalori & makro harian (hasil kalkulasi, disimpan sbg histori)
 CREATE TABLE IF NOT EXISTS daily_targets (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id SERIAL PRIMARY KEY,
   user_id INTEGER NOT NULL REFERENCES users(id),
   bmr REAL NOT NULL,
   tdee REAL NOT NULL,
@@ -31,12 +30,12 @@ CREATE TABLE IF NOT EXISTS daily_targets (
   target_protein_g REAL NOT NULL,
   target_fat_g REAL NOT NULL,
   target_carb_g REAL NOT NULL,
-  calculated_at TEXT DEFAULT (datetime('now'))
+  calculated_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- Database bahan makanan (referensi gizi per 100g)
 CREATE TABLE IF NOT EXISTS foods (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id SERIAL PRIMARY KEY,
   name TEXT NOT NULL UNIQUE,
   category TEXT, -- karbohidrat, protein_hewani, protein_nabati, sayur, buah, lemak
   calories_per_100g REAL NOT NULL,
@@ -49,7 +48,7 @@ CREATE TABLE IF NOT EXISTS foods (
 
 -- Resep/menu (kombinasi dari beberapa bahan)
 CREATE TABLE IF NOT EXISTS recipes (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id SERIAL PRIMARY KEY,
   name TEXT NOT NULL,
   meal_type TEXT CHECK(meal_type IN ('breakfast', 'lunch', 'dinner', 'snack')),
   description TEXT
@@ -57,7 +56,7 @@ CREATE TABLE IF NOT EXISTS recipes (
 
 -- Detail bahan dalam suatu resep
 CREATE TABLE IF NOT EXISTS recipe_ingredients (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id SERIAL PRIMARY KEY,
   recipe_id INTEGER NOT NULL REFERENCES recipes(id),
   food_id INTEGER NOT NULL REFERENCES foods(id),
   portion_g REAL NOT NULL
@@ -65,10 +64,10 @@ CREATE TABLE IF NOT EXISTS recipe_ingredients (
 
 -- Log konsumsi harian pengguna
 CREATE TABLE IF NOT EXISTS meal_logs (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id SERIAL PRIMARY KEY,
   user_id INTEGER NOT NULL REFERENCES users(id),
   recipe_id INTEGER REFERENCES recipes(id),
   food_id INTEGER REFERENCES foods(id),
   portion_g REAL,
-  logged_at TEXT DEFAULT (datetime('now'))
+  logged_at TIMESTAMPTZ DEFAULT now()
 );

@@ -30,9 +30,8 @@ COPY --from=build /app/src ./src
 COPY --from=build /app/db ./db
 COPY --from=build /app/frontend/dist ./frontend/dist
 
-# Volume untuk database SQLite persisten (mount di platform hosting)
-VOLUME ["/data"]
-ENV DB_PATH=/data/nutrition.db
+# DATABASE_URL (connection string PostgreSQL, mis. Supabase/Neon) wajib
+# di-set lewat env var platform hosting saat run container ini.
 
 EXPOSE 3000
 CMD ["node", "server.js"]
