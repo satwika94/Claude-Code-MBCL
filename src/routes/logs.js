@@ -120,6 +120,7 @@ module.exports = (db) => {
           protein_g: target.target_protein_g,
           fat_g: target.target_fat_g,
           carb_g: target.target_carb_g,
+          water_ml: target.target_water_ml,
         },
         consumed,
         remaining: {

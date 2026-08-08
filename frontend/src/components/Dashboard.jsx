@@ -91,6 +91,9 @@ export default function Dashboard({ user, onSwitchProfile }) {
               : `Sisa ${summary.remaining.calories} kkal hari ini`}
           </p>
           <MacroBars consumed={summary.consumed} target={summary.target} />
+          {summary.target.water_ml && (
+            <p className="water-target">💧 Target cairan: {summary.target.water_ml} ml/hari</p>
+          )}
         </div>
       </section>
 

@@ -44,12 +44,27 @@ function calculateTargetCalories(tdee, goal) {
 }
 
 /**
- * Hitung pembagian makronutrien (gram)
+ * Hitung pembagian makronutrien (gram).
+ *
+ * Default (macroPreference tidak diisi):
  * - Protein: 1.8 g/kg berat badan (cukup untuk aktif berolahraga)
  * - Lemak: 25% dari total kalori
  * - Karbohidrat: sisanya
+ *
+ * Custom (macroPreference diisi, hasil dari normalizeMacroPreference):
+ * gram dihitung langsung dari persentase kalori tiap makro
+ * (protein & karbo = 4 kkal/g, lemak = 9 kkal/g).
  */
-function calculateMacros(targetCalories, weightKg) {
+function calculateMacros(targetCalories, weightKg, macroPreference) {
+  if (macroPreference) {
+    const { proteinPct, fatPct, carbPct } = macroPreference;
+    return {
+      protein_g: Math.round((targetCalories * (proteinPct / 100)) / 4),
+      fat_g: Math.round((targetCalories * (fatPct / 100)) / 9),
+      carb_g: Math.round((targetCalories * (carbPct / 100)) / 4),
+    };
+  }
+
   const proteinG = 1.8 * weightKg;
   const proteinCalories = proteinG * 4;
 
@@ -67,19 +82,56 @@ function calculateMacros(targetCalories, weightKg) {
 }
 
 /**
+ * Validasi & normalisasi preferensi persentase makro custom dari user.
+ * Return null kalau user tidak mengisi (pakai kalkulasi default), atau
+ * object { proteinPct, fatPct, carbPct } kalau valid. Throw Error kalau
+ * diisi tapi tidak valid (dipakai di route handler, di-catch jadi 400).
+ */
+function normalizeMacroPreference({ proteinPct, fatPct, carbPct } = {}) {
+  if (proteinPct === undefined && fatPct === undefined && carbPct === undefined) return null;
+  if (proteinPct === null && fatPct === null && carbPct === null) return null;
+
+  const p = Number(proteinPct);
+  const f = Number(fatPct);
+  const c = Number(carbPct);
+
+  if ([p, f, c].some((v) => !Number.isFinite(v) || v < 0)) {
+    throw new Error("Persentase makro (protein/lemak/karbo) harus berupa angka 0 atau lebih");
+  }
+
+  const total = p + f + c;
+  if (Math.abs(total - 100) > 0.5) {
+    throw new Error(`Total persentase makro harus 100% (sekarang ${total}%)`);
+  }
+
+  return { proteinPct: p, fatPct: f, carbPct: c };
+}
+
+/**
+ * Estimasi kebutuhan cairan harian (ml), formula umum 35 ml per kg berat
+ * badan. Ini estimasi standar untuk orang dewasa sehat, bukan anjuran
+ * medis — sama seperti disclaimer rumus gizi lain di aplikasi ini.
+ */
+function calculateWaterNeeds(weightKg) {
+  return Math.round(weightKg * 35);
+}
+
+/**
  * Fungsi utama: hitung semua kebutuhan gizi dari data profil user
  */
-function calculateNutritionNeeds({ gender, age, weightKg, heightCm, activityLevel, goal }) {
+function calculateNutritionNeeds({ gender, age, weightKg, heightCm, activityLevel, goal, macroPreference }) {
   const bmr = calculateBMR({ gender, weightKg, heightCm, age });
   const tdee = calculateTDEE(bmr, activityLevel);
   const targetCalories = calculateTargetCalories(tdee, goal);
-  const macros = calculateMacros(targetCalories, weightKg);
+  const macros = calculateMacros(targetCalories, weightKg, macroPreference);
+  const waterMl = calculateWaterNeeds(weightKg);
 
   return {
     bmr: Math.round(bmr),
     tdee: Math.round(tdee),
     target_calories: Math.round(targetCalories),
     ...macros,
+    water_ml: waterMl,
   };
 }
 
@@ -88,6 +140,8 @@ module.exports = {
   calculateTDEE,
   calculateTargetCalories,
   calculateMacros,
+  calculateWaterNeeds,
+  normalizeMacroPreference,
   calculateNutritionNeeds,
   ACTIVITY_FACTORS,
   GOAL_ADJUSTMENTS,

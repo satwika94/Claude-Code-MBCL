@@ -20,6 +20,14 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- Preferensi persentase makro custom (opsional). NULL di ketiganya berarti
+-- user pakai kalkulasi otomatis (1.8g/kg protein, 25% lemak, sisanya karbo)
+-- alih-alih persentase pilihan sendiri. ADD COLUMN IF NOT EXISTS supaya
+-- aman dijalankan ulang di database yang sudah ada (lihat db/seed.js).
+ALTER TABLE users ADD COLUMN IF NOT EXISTS protein_pct REAL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS fat_pct REAL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS carb_pct REAL;
+
 -- Target kalori & makro harian (hasil kalkulasi, disimpan sbg histori)
 CREATE TABLE IF NOT EXISTS daily_targets (
   id SERIAL PRIMARY KEY,
@@ -32,6 +40,9 @@ CREATE TABLE IF NOT EXISTS daily_targets (
   target_carb_g REAL NOT NULL,
   calculated_at TIMESTAMPTZ DEFAULT now()
 );
+
+-- Target kebutuhan cairan harian (ml, estimasi dari berat badan)
+ALTER TABLE daily_targets ADD COLUMN IF NOT EXISTS target_water_ml REAL;
 
 -- Database bahan makanan (referensi gizi per 100g)
 CREATE TABLE IF NOT EXISTS foods (

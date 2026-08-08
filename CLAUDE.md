@@ -24,7 +24,7 @@ npm run seed                                 # jalankan schema.sql + isi/update 
 - `src/app.js` — bikin `pg.Pool` dari `DATABASE_URL`, mount semua route di bawah `/api`, serve `frontend/dist` kalau ada, auto-seed database kalau tabel `foods` masih kosong. Dipakai bareng oleh `server.js` (Render/Railway/Docker/dev lokal — panggil `app.listen()`) DAN `api/index.js` (Vercel Serverless Function — export handler tanpa `listen()`, Vercel yang urus lifecycle-nya). Kalau ubah routing/middleware, ubah di `src/app.js`, bukan duplikat di dua tempat
 - `server.js` — entry point mode server biasa (satu proses long-running), dipakai `npm start`
 - `api/index.js` — entry point mode Vercel Functions, dipakai kalau full-stack (frontend+backend) di-deploy ke Vercel sekaligus (lihat `DEPLOY.md` Opsi D); `vercel.json` di root yang atur build frontend + expose folder `api/` ini
-- `src/services/nutritionCalculator.js` — rumus BMR/TDEE/makro (Mifflin-St Jeor), murni fungsi tanpa DB
+- `src/services/nutritionCalculator.js` — rumus BMR/TDEE/makro (Mifflin-St Jeor) + estimasi cairan (35ml/kg), murni fungsi tanpa DB. Makro default: 1.8g/kg protein + 25% lemak + sisanya karbo — bisa dioverride user lewat `macroPreference` (persentase custom, divalidasi `normalizeMacroPreference()` harus total 100%)
 - `src/services/menuRecommender.js` — logika susun menu harian. **Penting**: tiap makan utama (sarapan/siang/malam) WAJIB 4 kelompok (karbohidrat+protein+sayur+lemak), cemilan WAJIB dari kelompok `buah`/`camilan` saja — jangan comot acak dari semua kategori kalau mengubah logika ini
 - `src/routes/*.js` — tiap file terima `db` (instance `pg.Pool`) via factory function, kecuali `calculate.js` yang stateless. Query pakai `await db.query(...)`, bukan `db.prepare(...).get/all/run` gaya better-sqlite3 lama
 - `db/foods_data.json` — sumber data 1.343 bahan makanan (dari TKPI Kemenkes RI). Kategori & flag vegetarian/vegan di-generate otomatis oleh `db/convert_tkpi_xlsx.py` lewat pencocokan kata kunci nama — LIHAT file itu & README bagian "Sumber data gizi" sebelum mengubah kategorisasi, ada banyak catatan false-positive yang sudah diperbaiki (mis. "bayam" vs "ayam", "sale pisang" vs "ikan sale")
@@ -39,6 +39,6 @@ npm run seed                                 # jalankan schema.sql + isi/update 
 
 ## Istilah domain (biar konsisten)
 `gizi`=nutrition, `kalori`=calories, `makro`=macros (protein/lemak/karbo),
-`camilan`=snack, `porsi`=portion, `catat`/`log`=log a meal, `target`=daily
-target, `konsumsi`=consumed. Satuan gizi selalu per 100g di database
-(`calories_per_100g`, dst).
+`cairan`=fluid/water, `camilan`=snack, `porsi`=portion, `catat`/`log`=log a
+meal, `target`=daily target, `konsumsi`=consumed. Satuan gizi selalu per
+100g di database (`calories_per_100g`, dst).
