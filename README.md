@@ -19,7 +19,7 @@ Dibangun dengan Node.js + Express + PostgreSQL (mis. Supabase/Neon, diakses lewa
 - **Tracking konsumsi harian** — cari makanan, catat porsi, lihat progres kalori & makro
   real-time, hapus catatan yang salah
 - **Frontend web (React)** — halaman onboarding + dashboard harian dengan desain custom
-  ("Buku Gizi": nota warung + cincin piring kalori sebagai elemen utama)
+  ("NutriCalc": nota warung + cincin piring kalori sebagai elemen utama)
 - **Riwayat 7 hari** — grafik batang konsistensi kalori, dibandingkan dengan garis target
 - **Menu hari ini di dashboard** — usulan menu otomatis lengkap dengan tombol "+ Catat"
   per item untuk langsung mencatat tanpa perlu cari manual
