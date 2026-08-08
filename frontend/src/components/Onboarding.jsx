@@ -77,7 +77,7 @@ export default function Onboarding({ onDone }) {
   return (
     <div className="page page--centered">
       <div className="ledger-card onboarding-card">
-        <p className="eyebrow">Buku Gizi — Buku Baru</p>
+        <p className="eyebrow">NutriCalc — Profil Baru</p>
         <h1 className="display-title">Catat kebutuhan gizimu</h1>
         <p className="lede">
           Isi data diri sekali di sini. Kami hitung kebutuhan kalori & makro harianmu,

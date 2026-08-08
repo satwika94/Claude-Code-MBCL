@@ -1,4 +1,4 @@
-# Panduan Deploy — Buku Gizi
+# Panduan Deploy — NutriCalc
 
 Aplikasi ini sudah disiapkan supaya bisa deploy sebagai **satu service saja**
 (backend Express men-serve hasil build frontend React, jadi cuma butuh 1 URL,
@@ -231,7 +231,7 @@ Directory default — Root Directory tidak bisa diubah setelah project dibuat.
 
 Buka URL yang didapat dari Render/Railway/Vercel (tergantung opsi yang
 kamu pilih) di HP atau browser:
-1. Harus langsung muncul form onboarding "Buku Gizi"
+1. Harus langsung muncul form onboarding "NutriCalc"
 2. Isi profil → harus lanjut ke dashboard dengan cincin kalori
 3. Coba catat makanan → refresh halaman, atau buka lagi besok → catatan
    harus tetap ada (data tersimpan di Supabase, bukan disk backend, jadi

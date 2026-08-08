@@ -1,4 +1,4 @@
-# Buku Gizi — konteks untuk Claude Code
+# NutriCalc — konteks untuk Claude Code
 
 Aplikasi pelacak kebutuhan gizi & konsumsi harian untuk pengguna Indonesia.
 Backend Node.js/Express + PostgreSQL (mis. Supabase/Neon), frontend React

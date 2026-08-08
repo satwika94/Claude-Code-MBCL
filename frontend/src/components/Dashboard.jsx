@@ -74,7 +74,7 @@ export default function Dashboard({ user, onSwitchProfile }) {
     <div className="page">
       <header className="app-header">
         <div>
-          <p className="eyebrow">Buku Gizi · {DAY_LABEL}</p>
+          <p className="eyebrow">NutriCalc · {DAY_LABEL}</p>
           <h1 className="display-title display-title--sm">Halo, {user.name.split(" ")[0]}</h1>
         </div>
         <button className="btn btn--ghost" onClick={onSwitchProfile}>
