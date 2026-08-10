@@ -45,6 +45,17 @@ export const api = {
   getMealLogs: (userId, date) =>
     request(`/meal-logs/${userId}${date ? `?date=${date}` : ""}`),
 
+  logWater: ({ userId, amountMl }) =>
+    request("/log-water", {
+      method: "POST",
+      body: JSON.stringify({ userId, amountMl }),
+    }),
+
+  deleteWaterLog: (logId) => request(`/log-water/${logId}`, { method: "DELETE" }),
+
+  getWaterLogs: (userId, date) =>
+    request(`/water-logs/${userId}${date ? `?date=${date}` : ""}`),
+
   getDailySummary: (userId, date) =>
     request(`/daily-summary/${userId}${date ? `?date=${date}` : ""}`),
 

@@ -80,6 +80,55 @@ module.exports = (db) => {
   });
 
   /**
+   * POST /api/log-water
+   * Catat asupan cairan (air minum, dll).
+   * Body: { userId, amountMl }
+   */
+  router.post("/log-water", async (req, res) => {
+    const { userId, amountMl } = req.body;
+    if (!userId || !amountMl || Number(amountMl) <= 0) {
+      return res.status(400).json({ error: "userId dan amountMl (lebih dari 0) wajib diisi" });
+    }
+
+    const { rows } = await db.query(
+      "INSERT INTO water_logs (user_id, amount_ml) VALUES ($1, $2) RETURNING id, amount_ml, logged_at",
+      [userId, Number(amountMl)]
+    );
+
+    res.json({
+      success: true,
+      data: { log_id: rows[0].id, amount_ml: rows[0].amount_ml, logged_at: rows[0].logged_at },
+    });
+  });
+
+  /**
+   * DELETE /api/log-water/:id
+   */
+  router.delete("/log-water/:id", async (req, res) => {
+    const { rowCount } = await db.query("DELETE FROM water_logs WHERE id = $1", [req.params.id]);
+    if (rowCount === 0) return res.status(404).json({ error: "Log tidak ditemukan" });
+    res.json({ success: true });
+  });
+
+  /**
+   * GET /api/water-logs/:userId?date=YYYY-MM-DD
+   * Daftar log asupan cairan user pada tanggal tertentu (default: hari ini)
+   */
+  router.get("/water-logs/:userId", async (req, res) => {
+    const date = req.query.date || new Date().toISOString().slice(0, 10);
+    const { rows } = await db.query(`
+      SELECT id, amount_ml, logged_at FROM water_logs
+      WHERE user_id = $1 AND logged_at::date = $2::date
+      ORDER BY logged_at ASC
+    `, [req.params.userId, date]);
+
+    res.json({
+      success: true,
+      data: rows.map((r) => ({ log_id: r.id, amount_ml: r.amount_ml, logged_at: r.logged_at })),
+    });
+  });
+
+  /**
    * GET /api/daily-summary/:userId?date=YYYY-MM-DD
    * Target gizi aktif user + total konsumsi hari ini + sisa (remaining)
    */
@@ -111,6 +160,15 @@ module.exports = (db) => {
 
     for (const k of Object.keys(consumed)) consumed[k] = Math.round(consumed[k] * 10) / 10;
 
+    const { rows: waterRows } = await db.query(`
+      SELECT COALESCE(SUM(amount_ml), 0) as total_ml FROM water_logs
+      WHERE user_id = $1 AND logged_at::date = $2::date
+    `, [userId, date]);
+    const consumedWaterMl = Math.round(waterRows[0].total_ml);
+    const waterPercent = target.target_water_ml
+      ? Math.round((consumedWaterMl / target.target_water_ml) * 100)
+      : null;
+
     res.json({
       success: true,
       data: {
@@ -122,13 +180,14 @@ module.exports = (db) => {
           carb_g: target.target_carb_g,
           water_ml: target.target_water_ml,
         },
-        consumed,
+        consumed: { ...consumed, water_ml: consumedWaterMl },
         remaining: {
           calories: Math.round(target.target_calories - consumed.calories),
           protein_g: Math.round((target.target_protein_g - consumed.protein_g) * 10) / 10,
           fat_g: Math.round((target.target_fat_g - consumed.fat_g) * 10) / 10,
           carb_g: Math.round((target.target_carb_g - consumed.carb_g) * 10) / 10,
         },
+        water_percent: waterPercent,
       },
     });
   });
