@@ -6,6 +6,7 @@ import MealLogList from "./MealLogList";
 import FoodLogger from "./FoodLogger";
 import HistoryChart from "./HistoryChart";
 import MenuSuggestion from "./MenuSuggestion";
+import WaterTracker from "./WaterTracker";
 
 const DAY_LABEL = new Intl.DateTimeFormat("id-ID", {
   weekday: "long",
@@ -16,19 +17,22 @@ const DAY_LABEL = new Intl.DateTimeFormat("id-ID", {
 export default function Dashboard({ user, onSwitchProfile }) {
   const [summary, setSummary] = useState(null);
   const [logs, setLogs] = useState([]);
+  const [waterLogs, setWaterLogs] = useState([]);
   const [history, setHistory] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     try {
-      const [summaryData, logsData, historyData] = await Promise.all([
+      const [summaryData, logsData, waterLogsData, historyData] = await Promise.all([
         api.getDailySummary(user.id),
         api.getMealLogs(user.id),
+        api.getWaterLogs(user.id),
         api.getHistory(user.id, 7),
       ]);
       setSummary(summaryData);
       setLogs(logsData);
+      setWaterLogs(waterLogsData);
       setHistory(historyData);
       setError("");
     } catch (err) {
@@ -91,9 +95,6 @@ export default function Dashboard({ user, onSwitchProfile }) {
               : `Sisa ${summary.remaining.calories} kkal hari ini`}
           </p>
           <MacroBars consumed={summary.consumed} target={summary.target} />
-          {summary.target.water_ml && (
-            <p className="water-target">💧 Target cairan: {summary.target.water_ml} ml/hari</p>
-          )}
         </div>
       </section>
 
@@ -105,6 +106,17 @@ export default function Dashboard({ user, onSwitchProfile }) {
         />
         <MealLogList logs={logs} onDelete={handleDelete} />
       </section>
+
+      {summary.target.water_ml && (
+        <WaterTracker
+          userId={user.id}
+          target={summary.target.water_ml}
+          consumedMl={summary.consumed.water_ml}
+          percent={summary.water_percent}
+          logs={waterLogs}
+          onLogged={refresh}
+        />
+      )}
 
       {history && <HistoryChart days={history.days} targetCalories={history.target_calories} />}
 

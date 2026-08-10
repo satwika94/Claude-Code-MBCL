@@ -82,3 +82,11 @@ CREATE TABLE IF NOT EXISTS meal_logs (
   portion_g REAL,
   logged_at TIMESTAMPTZ DEFAULT now()
 );
+
+-- Log asupan cairan harian pengguna (independen dari meal_logs, satuan ml)
+CREATE TABLE IF NOT EXISTS water_logs (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  amount_ml REAL NOT NULL,
+  logged_at TIMESTAMPTZ DEFAULT now()
+);

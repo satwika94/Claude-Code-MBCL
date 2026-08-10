@@ -317,10 +317,88 @@ select:focus {
   transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.water-target {
-  margin: 14px 0 0;
-  font-size: 13px;
+/* ---------- pelacak cairan ---------- */
+
+.water-card {
+  margin-bottom: 20px;
+}
+
+.water-summary {
+  margin-bottom: 16px;
+}
+
+.water-track {
+  height: 10px;
+  background: var(--line);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.water-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--turmeric-tint);
+  transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.water-fill--over {
+  background: var(--daun);
+}
+
+.water-summary__text {
+  font-size: 14px;
+  color: var(--ink);
+  margin: 0;
+}
+
+.water-percent {
   color: var(--ink-soft);
+}
+
+.water-quick-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.water-quick-btn {
+  padding: 8px 14px;
+  font-size: 13px;
+}
+
+.water-custom-form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.water-custom-form input {
+  flex: 1;
+}
+
+.water-log-list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+}
+
+.water-log-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--line-strong);
+  font-size: 13px;
+}
+
+.water-log-row:last-child {
+  border-bottom: none;
+}
+
+.water-log-time {
+  flex: 1;
 }
 
 /* ---------- dua kolom: logger + struk ---------- */

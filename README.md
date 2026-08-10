@@ -8,7 +8,8 @@ Dibangun dengan Node.js + Express + PostgreSQL (mis. Supabase/Neon, diakses lewa
 - Kalkulasi target makro (protein/lemak/karbo) — otomatis (1.8g/kg protein, 25% lemak, sisanya
   karbo) atau **custom**: user bisa isi persentase karbo/protein/lemak sendiri (opsional, wajib
   total 100%) saat isi profil
-- Estimasi target kebutuhan cairan harian (35 ml/kg berat badan), ditampilkan di dashboard
+- **Tracking asupan cairan** — target harian (35 ml/kg berat badan), catat minum lewat tombol
+  cepat (gelas/botol) atau jumlah custom, progress bar + persentase pemenuhan real-time
 - Database bahan makanan: **1.343 item resmi dari TKPI** (Tabel Komposisi Pangan Indonesia,
   Kementerian Kesehatan RI), lintas 10 kategori (karbohidrat, protein hewani, protein nabati,
   sayur, buah, lemak, **camilan/jajan pasar**, minuman, bumbu, olahan)
@@ -214,6 +215,20 @@ GET /api/meal-logs/:userId?date=2026-08-01
 ```
 GET /api/daily-summary/:userId?date=2026-08-01
 ```
+Response termasuk `consumed.water_ml` (total asupan cairan hari itu) dan `water_percent`
+(persentase pemenuhan target cairan).
+
+### Catat/lihat/hapus asupan cairan
+```
+POST /api/log-water
+Content-Type: application/json
+
+{ "userId": 1, "amountMl": 500 }
+```
+```
+DELETE /api/log-water/:logId
+GET /api/water-logs/:userId?date=2026-08-01
+```
 
 ### 10. Riwayat kalori N hari terakhir (untuk grafik)
 ```
@@ -276,7 +291,8 @@ nutrition-app/
 │           ├── FoodLogger.jsx      # Cari & catat makanan
 │           ├── MealLogList.jsx     # Daftar catatan hari ini (gaya struk)
 │           ├── HistoryChart.jsx    # Grafik batang riwayat 7 hari
-│           └── MenuSuggestion.jsx  # Usulan menu harian + tombol catat cepat
+│           ├── MenuSuggestion.jsx  # Usulan menu harian + tombol catat cepat
+│           └── WaterTracker.jsx    # Progress + tombol cepat catat asupan cairan
 └── package.json
 ```
 
