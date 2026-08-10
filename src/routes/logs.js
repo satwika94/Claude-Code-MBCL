@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const { asyncHandler } = require("../middleware/asyncHandler");
 
 module.exports = (db) => {
   /**
@@ -7,7 +8,7 @@ module.exports = (db) => {
    * Catat konsumsi satu item makanan.
    * Body: { userId, foodId, portionG, mealType? }
    */
-  router.post("/log-meal", async (req, res) => {
+  router.post("/log-meal", asyncHandler(async (req, res) => {
     const { userId, foodId, portionG } = req.body;
     if (!userId || !foodId || !portionG) {
       return res.status(400).json({ error: "userId, foodId, dan portionG wajib diisi" });
@@ -35,22 +36,22 @@ module.exports = (db) => {
         carb_g: Math.round(food.carb_per_100g * factor * 10) / 10,
       },
     });
-  });
+  }));
 
   /**
    * DELETE /api/log-meal/:id
    */
-  router.delete("/log-meal/:id", async (req, res) => {
+  router.delete("/log-meal/:id", asyncHandler(async (req, res) => {
     const { rowCount } = await db.query("DELETE FROM meal_logs WHERE id = $1", [req.params.id]);
     if (rowCount === 0) return res.status(404).json({ error: "Log tidak ditemukan" });
     res.json({ success: true });
-  });
+  }));
 
   /**
    * GET /api/meal-logs/:userId?date=YYYY-MM-DD
    * Daftar log konsumsi user pada tanggal tertentu (default: hari ini)
    */
-  router.get("/meal-logs/:userId", async (req, res) => {
+  router.get("/meal-logs/:userId", asyncHandler(async (req, res) => {
     const date = req.query.date || new Date().toISOString().slice(0, 10);
     const { rows: logs } = await db.query(`
       SELECT ml.id, ml.portion_g, ml.logged_at, f.id as food_id, f.name as food_name,
@@ -77,14 +78,14 @@ module.exports = (db) => {
     });
 
     res.json({ success: true, data: items });
-  });
+  }));
 
   /**
    * POST /api/log-water
    * Catat asupan cairan (air minum, dll).
    * Body: { userId, amountMl }
    */
-  router.post("/log-water", async (req, res) => {
+  router.post("/log-water", asyncHandler(async (req, res) => {
     const { userId, amountMl } = req.body;
     if (!userId || !amountMl || Number(amountMl) <= 0) {
       return res.status(400).json({ error: "userId dan amountMl (lebih dari 0) wajib diisi" });
@@ -99,22 +100,22 @@ module.exports = (db) => {
       success: true,
       data: { log_id: rows[0].id, amount_ml: rows[0].amount_ml, logged_at: rows[0].logged_at },
     });
-  });
+  }));
 
   /**
    * DELETE /api/log-water/:id
    */
-  router.delete("/log-water/:id", async (req, res) => {
+  router.delete("/log-water/:id", asyncHandler(async (req, res) => {
     const { rowCount } = await db.query("DELETE FROM water_logs WHERE id = $1", [req.params.id]);
     if (rowCount === 0) return res.status(404).json({ error: "Log tidak ditemukan" });
     res.json({ success: true });
-  });
+  }));
 
   /**
    * GET /api/water-logs/:userId?date=YYYY-MM-DD
    * Daftar log asupan cairan user pada tanggal tertentu (default: hari ini)
    */
-  router.get("/water-logs/:userId", async (req, res) => {
+  router.get("/water-logs/:userId", asyncHandler(async (req, res) => {
     const date = req.query.date || new Date().toISOString().slice(0, 10);
     const { rows } = await db.query(`
       SELECT id, amount_ml, logged_at FROM water_logs
@@ -126,13 +127,13 @@ module.exports = (db) => {
       success: true,
       data: rows.map((r) => ({ log_id: r.id, amount_ml: r.amount_ml, logged_at: r.logged_at })),
     });
-  });
+  }));
 
   /**
    * GET /api/daily-summary/:userId?date=YYYY-MM-DD
    * Target gizi aktif user + total konsumsi hari ini + sisa (remaining)
    */
-  router.get("/daily-summary/:userId", async (req, res) => {
+  router.get("/daily-summary/:userId", asyncHandler(async (req, res) => {
     const date = req.query.date || new Date().toISOString().slice(0, 10);
     const userId = req.params.userId;
 
@@ -190,14 +191,14 @@ module.exports = (db) => {
         water_percent: waterPercent,
       },
     });
-  });
+  }));
 
   /**
    * GET /api/history/:userId?days=7
    * Total kalori & makro per hari untuk N hari terakhir (termasuk hari
    * tanpa catatan sama sekali, supaya grafik tetap punya 7 titik).
    */
-  router.get("/history/:userId", async (req, res) => {
+  router.get("/history/:userId", asyncHandler(async (req, res) => {
     const userId = req.params.userId;
     const days = Math.min(Math.max(Number(req.query.days) || 7, 1), 30);
 
@@ -242,7 +243,7 @@ module.exports = (db) => {
       success: true,
       data: { target_calories: target.target_calories, days: series },
     });
-  });
+  }));
 
   return router;
 };
