@@ -61,6 +61,16 @@ function buildApp(db) {
   app.use("/api", usersRoutesFactory(db));
   app.use("/api", logsRoutesFactory(db));
 
+  // Error handler untuk semua route /api — jaring pengaman terakhir kalau
+  // ada error yang lolos dari asyncHandler/try-catch di masing-masing route
+  // (mis. tabel belum ada di database). Tanpa ini, Express 4 akan diam saja
+  // dan request menggantung sampai platform hosting timeout (503/504) tanpa
+  // pesan error yang jelas ke frontend.
+  app.use("/api", (err, req, res, next) => {
+    console.error("❌ API error:", err);
+    res.status(500).json({ error: err.message || "Terjadi kesalahan di server" });
+  });
+
   // Serve hasil build frontend (frontend/dist) kalau ada — dipakai saat
   // deploy mode "satu service" (Render/Railway/Docker). Di Vercel, frontend
   // di-serve langsung oleh CDN Vercel (bukan lewat blok ini), jadi

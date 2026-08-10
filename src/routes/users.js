@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { calculateNutritionNeeds, normalizeMacroPreference } = require("../services/nutritionCalculator");
+const { asyncHandler } = require("../middleware/asyncHandler");
 
 module.exports = (db) => {
   /**
@@ -11,7 +12,7 @@ module.exports = (db) => {
    * proteinPct/fatPct/carbPct opsional — kalau diisi ketiganya harus
    * berjumlah 100%, dipakai untuk override kalkulasi makro default.
    */
-  router.post("/users", async (req, res) => {
+  router.post("/users", asyncHandler(async (req, res) => {
     const {
       name, email, gender, age, weightKg, heightCm,
       activityLevel, goal, dietaryPreference = "none",
@@ -61,13 +62,13 @@ module.exports = (db) => {
     } catch (err) {
       res.status(400).json({ error: err.message });
     }
-  });
+  }));
 
   /**
    * GET /api/users/:id
    * Ambil profil user + target gizi aktif (terbaru)
    */
-  router.get("/users/:id", async (req, res) => {
+  router.get("/users/:id", asyncHandler(async (req, res) => {
     const { rows: userRows } = await db.query("SELECT * FROM users WHERE id = $1", [req.params.id]);
     const user = userRows[0];
     if (!user) return res.status(404).json({ error: "User tidak ditemukan" });
@@ -77,7 +78,7 @@ module.exports = (db) => {
     `, [req.params.id]);
 
     res.json({ success: true, data: { user, target: targetRows[0] } });
-  });
+  }));
 
   return router;
 };

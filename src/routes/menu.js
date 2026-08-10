@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { calculateNutritionNeeds, normalizeMacroPreference } = require("../services/nutritionCalculator");
 const { generateDailyMenu } = require("../services/menuRecommender");
+const { asyncHandler } = require("../middleware/asyncHandler");
 
 module.exports = (db) => {
   /**
@@ -11,7 +12,7 @@ module.exports = (db) => {
    * Menggabungkan kalkulasi kebutuhan gizi + rekomendasi menu harian
    * dalam satu panggilan (memudahkan untuk prototipe/testing).
    */
-  router.post("/recommend-menu", async (req, res) => {
+  router.post("/recommend-menu", asyncHandler(async (req, res) => {
     const {
       gender,
       age,
@@ -56,14 +57,14 @@ module.exports = (db) => {
     } catch (err) {
       res.status(400).json({ error: err.message });
     }
-  });
+  }));
 
   /**
    * GET /api/recommend-menu/:userId
    * Sama seperti POST /api/recommend-menu, tapi profil diambil dari
    * data user yang tersimpan (tidak perlu kirim ulang semua field).
    */
-  router.get("/recommend-menu/:userId", async (req, res) => {
+  router.get("/recommend-menu/:userId", asyncHandler(async (req, res) => {
     const { rows: userRows } = await db.query("SELECT * FROM users WHERE id = $1", [req.params.userId]);
     const user = userRows[0];
     if (!user) return res.status(404).json({ error: "User tidak ditemukan" });
@@ -98,7 +99,7 @@ module.exports = (db) => {
     } catch (err) {
       res.status(400).json({ error: err.message });
     }
-  });
+  }));
 
   return router;
 };
